@@ -241,10 +241,13 @@ function Show-Menu {
         }
         $selection = Read-Host "`n#"
         # Process menu selections
-        # The input has to be compared as a number, otherwise PowerShell compares it as
-        # text, and a negative index would silently select the last option in the list
-        if ($selection -match '^\d+$') {
-            $index = [int]$selection - 1
+        # TryParse rather than a cast, so a number too large for an Int32 redraws the
+        # menu instead of printing a conversion error. The result has to be compared as
+        # a number, otherwise PowerShell compares it as text, and a negative index
+        # would silently select the last option in the list
+        $number = 0
+        if ([int]::TryParse($selection, [ref]$number)) {
+            $index = $number - 1
             if ($index -ge 0 -and $index -lt $options.Count) {
                 & $options[$index].Action
             }
