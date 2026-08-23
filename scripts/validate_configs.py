@@ -314,8 +314,10 @@ def check_browser(browser, config):
     created = {key for deleted, key in reg_sections(install_reg) if not deleted}
     removed = {key.lower() for deleted, key in reg_sections(uninstall_reg) if deleted}
     for key in sorted(created):
-        # Deleting a parent key removes its subkeys too
-        if not any(key.lower().startswith(r) for r in removed):
+        # Deleting a parent key removes its subkeys too, but only a whole key:
+        # deleting ...\Microsoft\Edge does not remove ...\Microsoft\EdgeUpdate
+        lowered = key.lower()
+        if not any(lowered == r or lowered.startswith(r + "\\") for r in removed):
             error("%s: uninstall.reg does not remove %s" % (browser, key))
 
     # Every policy is documented
@@ -335,7 +337,8 @@ def check_script_profile_names(profiles):
     text = open(script, encoding="utf-8").read()
     known = {browser: profile.get("PayloadDisplayName", "")
              for browser, profile in profiles.items()}
-    for quoted in sorted(set(re.findall(r"then (?:open|select) '([^']+)'", text))):
+    # Some prompts quote the profile name and some do not, so both forms count
+    for quoted in sorted(set(re.findall(r"then (?:open|select) '?(.+?)'? and click", text))):
         if quoted not in known.values():
             error(
                 "main.sh tells the user to look for the profile %r, which is not "
