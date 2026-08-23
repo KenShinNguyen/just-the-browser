@@ -40,13 +40,13 @@ The Linux and macOS script is a Bash script. The baseline testing environment is
 You can run the scripts with a different base URL with a command-line argument. Here's how to do it on macOS/Linux:
 
 ```bash
-./main.sh "https://raw.githubusercontent.com/corbindavenport/just-the-browser/newbranch"
+./main.sh "https://raw.githubusercontent.com/KenShinNguyen/just-the-browser/newbranch"
 ```
 
 Here's how to do it on Windows:
 
 ```powershell
-./main.ps1 "https://raw.githubusercontent.com/corbindavenport/just-the-browser/newbranch"
+./main.ps1 "https://raw.githubusercontent.com/KenShinNguyen/just-the-browser/newbranch"
 ```
 
 The alternative base URL should **not** have an ending forward slash (/).

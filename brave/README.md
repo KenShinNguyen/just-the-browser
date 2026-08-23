@@ -10,16 +10,16 @@ You can check which policies are applied in Brave Browser by navigating to the `
 
 ### Windows installation
 
-1. Open the [registry file for installation](https://raw.githubusercontent.com/corbindavenport/just-the-browser/main/brave/install.reg) and save it (`Ctrl+S`) anywhere on your computer.
+1. Open the [registry file for installation](https://raw.githubusercontent.com/KenShinNguyen/just-the-browser/main/brave/install.reg) and save it (`Ctrl+S`) anywhere on your computer.
 2. In the File Explorer, right-click the file and select Open with > Registry Editor.
 3. Follow the prompts to install the registry keys to the Windows Registry.
 4. Restart Brave.
 
-To remove the custom configuration, follow the same steps with the [registry file for uninstallation](https://raw.githubusercontent.com/corbindavenport/just-the-browser/main/brave/uninstall.reg). This will remove the modified registry keys from your system.
+To remove the custom configuration, follow the same steps with the [registry file for uninstallation](https://raw.githubusercontent.com/KenShinNguyen/just-the-browser/main/brave/uninstall.reg). This will remove the modified registry keys from your system.
 
 ### macOS installation
 
-1. Open the [configuration file](https://raw.githubusercontent.com/corbindavenport/just-the-browser/main/brave/brave.mobileconfig) and save it (`Command+S`) anywhere on your computer.
+1. Open the [configuration file](https://raw.githubusercontent.com/KenShinNguyen/just-the-browser/main/brave/brave.mobileconfig) and save it (`Command+S`) anywhere on your computer.
 2. In the Finder, open the configuration file you downloaded. You should see a prompt that the profile is ready for review.
 3. Open the System Settings application (Apple menu > System Settings) and navigate to General > Device Management. If you are on macOS 12 Monterey or an older version, the application is called System Preferences, and you need to open the Profiles section.
 4. Double-click on the 'Brave Browser settings' configuration, then click the Install button and follow the prompts.
@@ -28,7 +28,7 @@ To remove the custom configuration, open the Device Management settings (or Prof
 
 ### Linux installation for system package
 
-1. Open the [configuration file](https://raw.githubusercontent.com/corbindavenport/just-the-browser/main/brave/managed_policies.json) and save it (`Ctrl+S`) anywhere on your computer. Make sure the file is called "managed_policies.json" (without the quotes).
+1. Open the [configuration file](https://raw.githubusercontent.com/KenShinNguyen/just-the-browser/main/brave/managed_policies.json) and save it (`Ctrl+S`) anywhere on your computer. Make sure the file is called "managed_policies.json" (without the quotes).
 2. Open a new Terminal window in the directory where the file is located. For example, if it's in your Downloads folder, open a Terminal and run `cd ~/Downloads` to switch to the Downloads directory.
 3. Create the managed policies directory with this command:
 ```shell

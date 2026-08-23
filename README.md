@@ -1,5 +1,17 @@
 # Just the Browser
 
+> [!IMPORTANT]
+> **This is a fork.** The upstream project is
+> [corbindavenport/just-the-browser](https://github.com/corbindavenport/just-the-browser)
+> by Corbin Davenport. The install commands and configuration links below point at
+> **this fork**, so they install the policy files from this repository, not upstream's.
+>
+> These scripts run with administrator/root access and apply browser policies from
+> whatever repository they are told to use. Read
+> [`main.sh`](main.sh) / [`main.ps1`](main.ps1) and the configuration files before
+> running anything, and only use a fork you have actually reviewed. If you want the
+> original, use the upstream repository instead.
+
 Just the Browser helps you remove AI features, telemetry data reporting, sponsored content, product integrations, and other annoyances from desktop web browsers. The goal is to give you "just the browser" and nothing else, using hidden settings in web browsers intended for companies and other organizations.
 
 This project includes configuration files for popular web browsers, documentation for installing and modifying them, and easy installation scripts.
@@ -12,7 +24,7 @@ The setup script can install the configuration files in a few clicks. You can al
 
 **Windows:** Search for "Windows PowerShell" in the Start Menu, right-click it, and select the "Run as administrator" option. Next, copy the below command, paste it into the window (`Ctrl+V`), and press the Enter/Return key:
 ```
-& ([scriptblock]::Create((irm "https://raw.githubusercontent.com/corbindavenport/just-the-browser/main/main.ps1")))
+& ([scriptblock]::Create((irm "https://raw.githubusercontent.com/KenShinNguyen/just-the-browser/main/main.ps1")))
 ```
 If you are on older versions of Windows, you may need to run this command first:
 ```
@@ -22,7 +34,7 @@ If you are on older versions of Windows, you may need to run this command first:
 **Mac and Linux:** Search for the Terminal in your applications list and open it. Next, copy the below command, paste it into the window (`Ctrl+V` or `Cmd+V`), and press the Enter/Return key:
 
 ```
-/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/corbindavenport/just-the-browser/main/main.sh)"
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/KenShinNguyen/just-the-browser/main/main.sh)"
 ```
 
 
@@ -32,7 +44,7 @@ See the [Google Chrome](chrome/README.md), [Microsoft Edge](edge/README.md), [Mo
 
 ## Website
 
-This repository also includes the static site generator for [justthebrowser.com](https://justthebrowser.com/), built with [Eleventy](https://www.11ty.dev/) and [Simple.css](https://simplecss.org/). The icons are from [Bootstrap Icons](https://icons.getbootstrap.com/).
+This repository also includes the static site generator for the project website, built with [Eleventy](https://www.11ty.dev/) and [Simple.css](https://simplecss.org/). The icons are from [Bootstrap Icons](https://icons.getbootstrap.com/).
 
 With Node.js and NPM installed, you can test the site like this:
 

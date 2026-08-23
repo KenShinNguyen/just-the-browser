@@ -10,12 +10,12 @@ You can check which policies are applied in Firefox by navigating to the `about:
 
 ### Windows installation
 
-1. Open the [registry file for installation](https://raw.githubusercontent.com/corbindavenport/just-the-browser/main/firefox/install.reg) and save it (`Ctrl+S`) anywhere on your computer.
+1. Open the [registry file for installation](https://raw.githubusercontent.com/KenShinNguyen/just-the-browser/main/firefox/install.reg) and save it (`Ctrl+S`) anywhere on your computer.
 2. In the File Explorer, right-click the file and select Open with > Registry Editor.
 3. Follow the prompts to install the registry keys to the Windows Registry.
 4. Restart Firefox.
 
-To remove the custom configuration, follow the same steps with the [registry file for uninstallation](https://raw.githubusercontent.com/corbindavenport/just-the-browser/main/firefox/uninstall.reg). This will remove the modified registry keys from your system.
+To remove the custom configuration, follow the same steps with the [registry file for uninstallation](https://raw.githubusercontent.com/KenShinNguyen/just-the-browser/main/firefox/uninstall.reg). This will remove the modified registry keys from your system.
 
 If the custom settings are still active, you may have used the JSON file method for installation. Find your Firefox installation directory, such as `C:\Program Files\Mozilla Firefox`, and check if it contains a "distribution" directory. If there is a `policies.json` file in the distribution directory, delete it.
 
@@ -23,7 +23,7 @@ If the custom settings are still active, you may have used the JSON file method 
 
 The macOS configuration file applies to all versions of Firefox. This includes Firefox stable, Firefox ESR, Firefox Beta, Firefox Developer Edition, and Firefox Nightly.
 
-1. Open the [configuration file](https://raw.githubusercontent.com/corbindavenport/just-the-browser/main/firefox/firefox.mobileconfig) and save it (`Command+S`) anywhere on your computer.
+1. Open the [configuration file](https://raw.githubusercontent.com/KenShinNguyen/just-the-browser/main/firefox/firefox.mobileconfig) and save it (`Command+S`) anywhere on your computer.
 2. In the Finder, open the configuration file you downloaded. You should see a prompt that the profile is ready for review.
 3. Open the System Settings application (Apple menu > System Settings) and navigate to General > Device Management. If you are on macOS 12 Monterey or an older version, the application is called System Preferences, and you need to open the Profiles section.
 4. Double-click on the 'Mozilla Firefox settings' configuration, then click the Install button and follow the prompts.
@@ -42,7 +42,7 @@ If you install Just the Browser again in the future, it will use the newer mobil
 
 Follow these instructions if you are using the [Firefox Flatpak package](https://flathub.org/en/apps/org.mozilla.firefox).
 
-1. Open the [configuration file](https://raw.githubusercontent.com/corbindavenport/just-the-browser/main/firefox/policies.json) and save it (`Ctrl+S`) anywhere on your computer. Make sure the file is called "policies.json" (without the quotes).
+1. Open the [configuration file](https://raw.githubusercontent.com/KenShinNguyen/just-the-browser/main/firefox/policies.json) and save it (`Ctrl+S`) anywhere on your computer. Make sure the file is called "policies.json" (without the quotes).
 2. Open a new Terminal window in the directory where the file is located. For example, if it's in your Downloads folder, open a Terminal and run `cd ~/Downloads` to switch to the Downloads directory.
 3. Find your Flatpak architecture and save it as a variable:
 ```shell
@@ -67,7 +67,7 @@ rm "$HOME/.local/share/flatpak/extension/org.mozilla.firefox.systemconfig/$FLATP
 
 ### Linux installation for system package
 
-1. Open the [configuration file](https://raw.githubusercontent.com/corbindavenport/just-the-browser/main/firefox/policies.json) and save it (`Ctrl+S`) anywhere on your computer. Make sure the file is called "policies.json" (without the quotes).
+1. Open the [configuration file](https://raw.githubusercontent.com/KenShinNguyen/just-the-browser/main/firefox/policies.json) and save it (`Ctrl+S`) anywhere on your computer. Make sure the file is called "policies.json" (without the quotes).
 2. Open a new Terminal window in the directory where the file is located. For example, if it's in your Downloads folder, open a Terminal and run `cd ~/Downloads` to switch to the Downloads directory.
 3. Create the Firefox policies directory with this command:
 ```shell
