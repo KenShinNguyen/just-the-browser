@@ -3,9 +3,11 @@
   "version": "1.0.0",
   "description": "Website for Just the Browser project.",
   "scripts": {
-    "test": "npx @11ty/eleventy --serve",
     "start": "npx @11ty/eleventy --serve",
-    "bundle": "npx @11ty/eleventy"
+    "build": "npx @11ty/eleventy --input=. --output=_site",
+    "bundle": "npx @11ty/eleventy",
+    "validate": "python3 scripts/validate_configs.py",
+    "test": "npm run validate && npm run build"
   },
   "keywords": [],
   "author": "Corbin Davenport",

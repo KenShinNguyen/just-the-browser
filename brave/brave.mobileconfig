@@ -17,7 +17,7 @@
 			<key>PayloadUUID</key>
 			<string>11100B41-35B2-4185-B8FD-89F6A9E073A3</string>
 			<key>PayloadVersion</key>
-			<true/>
+			<integer>1</integer>
 			<key>GenAILocalFoundationalModelSettings</key>
 			<integer>1</integer>
 			<key>BuiltInDnsClientEnabled</key>
@@ -45,7 +45,7 @@
 		</dict>
 	</array>
 	<key>PayloadDisplayName</key>
-	<string>Brave settings</string>
+	<string>Brave Browser settings</string>
 	<key>PayloadIdentifier</key>
 	<string>com.justthebrowser.brave</string>
 	<key>PayloadOrganization</key>

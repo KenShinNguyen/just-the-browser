@@ -13,6 +13,20 @@ If you are contributing updates to the browser configuration settings, your chan
 3. Add the setting to the `.json` file for Linux (if there is one)
 4. Add the setting and an explanation of the change to the README.md file
 
+Run the validation script before opening a pull request. It checks that every
+setting is present with the same value in all of the configuration files for
+that browser, that it is documented in the README.md table, and that the files
+themselves are well-formed:
+
+```shell
+python3 scripts/validate_configs.py
+```
+
+The same script runs on every pull request in the `validate.yml` GitHub Action,
+together with ShellCheck for `main.sh`, PSScriptAnalyzer for `main.ps1`, and a
+test build of the website. If a setting only applies to one platform, add it to
+the `PLATFORM_ONLY` list in the script with a comment explaining why.
+
 ### Working on the scripts
 
 The Windows script is a **PowerShell v5.0** script, so it can run out of the box on Windows 8.1, Windows 10, and Windows 11.
@@ -36,3 +50,8 @@ Here's how to do it on Windows:
 ```
 
 The alternative base URL should **not** have an ending forward slash (/).
+
+### Working on the website
+
+With Node.js and NPM installed, you can preview the site with `npm start`, and
+run the same checks CI runs with `npm test`.
