@@ -12,11 +12,20 @@ This project includes configuration files for popular web browsers, documentatio
 
 ## Get started
 
+<p style="border: 1px solid; border-radius: 6px; padding: .6rem 1rem;">
+<strong>This is a fork.</strong> The upstream project is
+<a href="https://github.com/corbindavenport/just-the-browser">corbindavenport/just-the-browser</a>
+by Corbin Davenport. The commands on this page install the policy files from
+<strong>this fork</strong>, not from upstream. The scripts run with administrator/root
+access, so review them and the configuration files before running anything, and only use
+a fork you have actually checked.
+</p>
+
 The setup script can install the configuration files in a few clicks. You can also follow the manual guides for [Google Chrome](/chrome), [Microsoft Edge](/edge), [Firefox](/firefox), and [Brave](/brave). If you don't like running scripts with administrator/root access, or the script does not work, use the guides instead.
 
 **Windows:** Search for "Windows PowerShell" in the Start Menu, right-click it, and select the "Run as administrator" option. Next, copy the below command, paste it into the window (`Ctrl+V`), and press the Enter/Return key:
 ```
-& ([scriptblock]::Create((irm "https://raw.githubusercontent.com/corbindavenport/just-the-browser/main/main.ps1")))
+& ([scriptblock]::Create((irm "https://raw.githubusercontent.com/KenShinNguyen/just-the-browser/main/main.ps1")))
 ```
 If you are on older versions of Windows, you may need to run this command first:
 ```
@@ -26,7 +35,7 @@ If you are on older versions of Windows, you may need to run this command first:
 **Mac and Linux:** Search for the Terminal in your applications list and open it. Next, copy the below command, paste it into the window (`Ctrl+V` or `Cmd+V`), and press the Enter/Return key:
 
 ```
-/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/corbindavenport/just-the-browser/main/main.sh)"
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/KenShinNguyen/just-the-browser/main/main.sh)"
 ```
 
 ## Subscribe to updates

@@ -10,16 +10,16 @@ You can check which policies are applied in Google Chrome by navigating to the `
 
 ### Windows installation
 
-1. Open the [registry file for installation](https://raw.githubusercontent.com/corbindavenport/just-the-browser/main/chrome/install.reg) and save it (`Ctrl+S`) anywhere on your computer.
+1. Open the [registry file for installation](https://raw.githubusercontent.com/KenShinNguyen/just-the-browser/main/chrome/install.reg) and save it (`Ctrl+S`) anywhere on your computer.
 2. In the File Explorer, right-click the file and select Open with > Registry Editor.
 3. Follow the prompts to install the registry keys to the Windows Registry.
 4. Restart Chrome.
 
-To remove the custom configuration, follow the same steps with the [registry file for uninstallation](https://raw.githubusercontent.com/corbindavenport/just-the-browser/main/chrome/uninstall.reg). This will remove the modified registry keys from your system.
+To remove the custom configuration, follow the same steps with the [registry file for uninstallation](https://raw.githubusercontent.com/KenShinNguyen/just-the-browser/main/chrome/uninstall.reg). This will remove the modified registry keys from your system.
 
 ### macOS installation
 
-1. Open the [configuration file](https://raw.githubusercontent.com/corbindavenport/just-the-browser/main/chrome/chrome.mobileconfig) and save it (`Command+S`) anywhere on your computer.
+1. Open the [configuration file](https://raw.githubusercontent.com/KenShinNguyen/just-the-browser/main/chrome/chrome.mobileconfig) and save it (`Command+S`) anywhere on your computer.
 2. In the Finder, open the configuration file you downloaded. You should see a prompt that the profile is ready for review.
 3. Open the System Settings application (Apple menu > System Settings) and navigate to General > Device Management. If you are on macOS 12 Monterey or an older version, the application is called System Preferences, and you need to open the Profiles section.
 4. Double-click on the 'Google Chrome settings' configuration, then click the Install button and follow the prompts.
@@ -30,7 +30,7 @@ To remove the custom configuration, open the Device Management settings (or Prof
 
 Follow these instructions if you are using the [Chromium Web Browser Flatpak package](https://flathub.org/en/apps/org.chromium.Chromium).
 
-1. Open the [configuration file](https://raw.githubusercontent.com/corbindavenport/just-the-browser/main/chrome/managed_policies.json) and save it (`Ctrl+S`) anywhere on your computer. Make sure the file is called "managed_policies.json" (without the quotes).
+1. Open the [configuration file](https://raw.githubusercontent.com/KenShinNguyen/just-the-browser/main/chrome/managed_policies.json) and save it (`Ctrl+S`) anywhere on your computer. Make sure the file is called "managed_policies.json" (without the quotes).
 2. Open a new Terminal window in the directory where the file is located. For example, if it's in your Downloads folder, open a Terminal and run `cd ~/Downloads` to switch to the Downloads directory.
 3. Find your Flatpak architecture and save it as a variable:
 ```shell
@@ -59,7 +59,7 @@ These instructions work for both Chromium and Google Chrome. You can check what 
 
 If you're not sure which `policies` directory path to use for Chromium, you can just create both of them.
 
-1. Open the [configuration file](https://raw.githubusercontent.com/corbindavenport/just-the-browser/main/chrome/managed_policies.json) and save it (`Ctrl+S`) anywhere on your computer. Make sure the file is called "managed_policies.json" (without the quotes).
+1. Open the [configuration file](https://raw.githubusercontent.com/KenShinNguyen/just-the-browser/main/chrome/managed_policies.json) and save it (`Ctrl+S`) anywhere on your computer. Make sure the file is called "managed_policies.json" (without the quotes).
 2. Open a new Terminal window in the directory where the file is located. For example, if it's in your Downloads folder, open a Terminal and run `cd ~/Downloads` to switch to the Downloads directory.
 3. Create the managed policies directory with one of the below commands.
     - For Google Chrome: `sudo mkdir -p /etc/opt/chrome/policies/managed`

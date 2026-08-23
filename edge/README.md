@@ -10,18 +10,18 @@ You can check which policies are applied in Microsoft Edge by navigating to the 
 
 ### Windows installation
 
-1. Open the [registry file for installation](https://raw.githubusercontent.com/corbindavenport/just-the-browser/main/edge/install.reg) and save it (`Ctrl+S`) anywhere on your computer.
+1. Open the [registry file for installation](https://raw.githubusercontent.com/KenShinNguyen/just-the-browser/main/edge/install.reg) and save it (`Ctrl+S`) anywhere on your computer.
 2. In the File Explorer, right-click the file and select Open with > Registry Editor.
 3. Follow the prompts to install the registry keys to the Windows Registry.
 4. Restart Edge.
 
-To remove the custom configuration, follow the same steps with the [registry file for uninstallation](https://raw.githubusercontent.com/corbindavenport/just-the-browser/main/edge/uninstall.reg). This will remove the modified registry keys from your system.
+To remove the custom configuration, follow the same steps with the [registry file for uninstallation](https://raw.githubusercontent.com/KenShinNguyen/just-the-browser/main/edge/uninstall.reg). This will remove the modified registry keys from your system.
 
 ### macOS installation
 
 The macOS configuration file applies to all versions of Edge. This includes Edge stable, Edge Beta, Edge Dev, and Edge Canary.
 
-1. Open the [configuration file](https://raw.githubusercontent.com/corbindavenport/just-the-browser/main/edge/edge.mobileconfig) and save it (`Command+S`) anywhere on your computer.
+1. Open the [configuration file](https://raw.githubusercontent.com/KenShinNguyen/just-the-browser/main/edge/edge.mobileconfig) and save it (`Command+S`) anywhere on your computer.
 2. In the Finder, open the configuration file you downloaded. You should see a prompt that the profile is ready for review.
 3. Open the System Settings application (Apple menu > System Settings) and navigate to General > Device Management. If you are on macOS 12 Monterey or an older version, the application is called System Preferences, and you need to open the Profiles section.
 4. Double-click on the 'Microsoft Edge settings' configuration, then click the Install button and follow the prompts.
