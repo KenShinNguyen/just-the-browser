@@ -6,7 +6,7 @@
 
 # Allow alternate base URL as first command-line argument, for testing and development
 if ($args.Count -eq 0) {
-    $BaseURL = "https://raw.githubusercontent.com/corbindavenport/just-the-browser/main"
+    $BaseURL = "https://raw.githubusercontent.com/KenShinNguyen/just-the-browser/main"
 } else {
     $BaseURL = $args[0]
 }
