@@ -2,7 +2,7 @@
 
 # Allow alternate base URL as first command-line argument, for testing and development
 if [ -z "$1" ]; then
-    BASEURL="https://raw.githubusercontent.com/corbindavenport/just-the-browser/main"
+    BASEURL="https://raw.githubusercontent.com/KenShinNguyen/just-the-browser/main"
 else
     BASEURL="$1"
 fi
