@@ -38,10 +38,15 @@ With Node.js and NPM installed, you can test the site like this:
 
 ```shell
 npm install
-npx @11ty/eleventy --serve
+npm start
 ```
 
 The site is compiled and deployed with the `eleventy_build.yml` GitHub Action.
+
+The browser configuration files, the install scripts, and the site build are
+checked on every pull request by the `validate.yml` GitHub Action. You can run
+the same checks locally with `npm test`. See [CONTRIBUTING.md](CONTRIBUTING.md)
+for details.
 
 ## Subscribe to updates
 

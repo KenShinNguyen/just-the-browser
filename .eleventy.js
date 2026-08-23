@@ -27,6 +27,8 @@ module.exports = function (eleventyConfig) {
             // Open all external links in new tab
             if (el.href.startsWith('https://') || el.href.startsWith('http://')) {
                 el.setAttribute('target', '_blank');
+                // Deny the opened page access to window.opener
+                el.setAttribute('rel', 'noopener noreferrer');
             }
         });
         return dom.serialize();

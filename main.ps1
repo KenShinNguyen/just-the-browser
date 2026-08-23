@@ -27,6 +27,43 @@ function Show-Header {
     Write-Host "`nJust the Browser ($($OS.Caption) Build $($OS.BuildNumber))`n========`n"
 }
 
+# Download a registry file and import it with reg.exe
+# The downloaded file is always deleted again, so temporary files are not left behind
+function Import-RemoteRegistryFile {
+    Param(
+        [Parameter(Position = 0, Mandatory = $true)]
+        [String]$Uri,
+        [Parameter(Position = 1, Mandatory = $true)]
+        [String]$FileName,
+        [Parameter(Position = 2, Mandatory = $true)]
+        [String]$SuccessMessage
+    )
+    $LocalPath = Join-Path $env:LocalAppData $FileName
+    Write-Host "Downloading registry file, please wait..."
+    try {
+        # Download file
+        # -UseBasicParsing is required on systems where Internet Explorer has never been configured
+        try {
+            Invoke-WebRequest -Uri $Uri -OutFile $LocalPath -UseBasicParsing
+        }
+        catch {
+            Read-Host -Prompt "Download failed! Press Enter/Return to continue" | Out-Null
+            return
+        }
+        # Import file
+        $Import = Start-Process "reg.exe" -ArgumentList "import `"$LocalPath`"" -WindowStyle Hidden -Wait -PassThru
+        if ($Import.ExitCode -eq 0) {
+            Read-Host -Prompt "$SuccessMessage Press Enter/Return to continue" | Out-Null
+        }
+        else {
+            Read-Host -Prompt "Registry import failed with exit code $($Import.ExitCode)! Press Enter/Return to continue" | Out-Null
+        }
+    }
+    finally {
+        Remove-Item -Path $LocalPath -Force -ErrorAction SilentlyContinue
+    }
+}
+
 # Remove Firefox JSON file if it exists, so it does not conflict with registry entries
 # Previous versions of Just the Browser used the JSON method
 function Uninstall-FirefoxJSON {
@@ -43,133 +80,37 @@ function Uninstall-FirefoxJSON {
 # Install Google Chrome settings
 function Install-Chrome {
     Show-Header
-    Write-Host "Downloading registry file, please wait..."
-    # Download file
-    try {
-        Invoke-WebRequest $GoogleChromeInstallRegistry -OutFile "$env:LocalAppData\chrome.reg"
-    }
-    catch {
-        Read-Host -Prompt "Download failed! Press Enter/Return to continue" | Out-Null
-        Return
-    }
-    # Install file
-    $ChromeInstall = Start-Process "reg.exe" -ArgumentList "import `"$env:LocalAppData\chrome.reg`"" -WindowStyle Hidden -Wait -PassThru
-    if ($ChromeInstall.ExitCode -eq 0) {
-        Read-Host -Prompt "Updated Google Chrome settings. Press Enter/Return to continue" | Out-Null
-    }
-    else {
-        Read-Host -Prompt "Install failed! Press Enter/Return to continue" | Out-Null
-    }
+    Import-RemoteRegistryFile $GoogleChromeInstallRegistry "chrome.reg" "Updated Google Chrome settings."
 }
 
 # Remove Google Chrome settings
 function Uninstall-Chrome {
     Show-Header
-    Write-Host "Downloading registry file, please wait..."
-    # Download file
-    try {
-        Invoke-WebRequest $GoogleChromeUninstallRegistry -OutFile "$env:LocalAppData\chrome.reg"
-    }
-    catch {
-        Read-Host -Prompt "Download failed! Press Enter/Return to continue" | Out-Null
-        Return
-    }
-    # Install file
-    $ChromeUninstall = Start-Process "reg.exe" -ArgumentList "import `"$env:LocalAppData\chrome.reg`"" -WindowStyle Hidden -Wait -PassThru
-    if ($ChromeUninstall.ExitCode -eq 0) {
-        Read-Host -Prompt "Removed Google Chrome settings. Press Enter/Return to continue" | Out-Null
-    }
-    else {
-        Read-Host -Prompt "Remove failed! Press Enter/Return to continue" | Out-Null
-    }
+    Import-RemoteRegistryFile $GoogleChromeUninstallRegistry "chrome.reg" "Removed Google Chrome settings."
 }
 
 # Install Microsoft Edge settings
 function Install-Edge {
     Show-Header
-    Write-Host "Downloading registry file, please wait..."
-    # Download file
-    try {
-        Invoke-WebRequest $MicrosoftEdgeInstallRegistry -OutFile "$env:LocalAppData\edge.reg"
-    }
-    catch {
-        Read-Host -Prompt "Download failed! Press Enter/Return to continue" | Out-Null
-        Return
-    }
-    # Install file
-    $EdgeInstall = Start-Process "reg.exe" -ArgumentList "import `"$env:LocalAppData\edge.reg`"" -WindowStyle Hidden -Wait -PassThru
-    if ($EdgeInstall.ExitCode -eq 0) {
-        Read-Host -Prompt "Updated Microsoft Edge settings. Press Enter/Return to continue" | Out-Null
-    }
-    else {
-        Read-Host -Prompt "Install failed! Press Enter/Return to continue" | Out-Null
-    }
+    Import-RemoteRegistryFile $MicrosoftEdgeInstallRegistry "edge.reg" "Updated Microsoft Edge settings."
 }
 
 # Remove Microsoft Edge settings
 function Uninstall-Edge {
     Show-Header
-    Write-Host "Downloading registry file, please wait..."
-    # Download file
-    try {
-        Invoke-WebRequest $MicrosoftEdgeUninstallRegistry -OutFile "$env:LocalAppData\edge.reg"
-    }
-    catch {
-        Read-Host -Prompt "Download failed! Press Enter/Return to continue" | Out-Null
-        Return
-    }
-    # Install file
-    $EdgeUninstall = Start-Process "reg.exe" -ArgumentList "import `"$env:LocalAppData\edge.reg`"" -WindowStyle Hidden -Wait -PassThru
-    if ($EdgeUninstall.ExitCode -eq 0) {
-        Read-Host -Prompt "Removed Microsoft Edge settings. Press Enter/Return to continue" | Out-Null
-    }
-    else {
-        Read-Host -Prompt "Remove failed! Press Enter/Return to continue" | Out-Null
-    }
+    Import-RemoteRegistryFile $MicrosoftEdgeUninstallRegistry "edge.reg" "Removed Microsoft Edge settings."
 }
 
 # Install Brave settings
 function Install-Brave {
     Show-Header
-    Write-Host "Downloading registry file, please wait..."
-    # Download file
-    try {
-        Invoke-WebRequest $BraveInstallRegistry -OutFile "$env:LocalAppData\brave.reg"
-    }
-    catch {
-        Read-Host -Prompt "Download failed! Press Enter/Return to continue" | Out-Null
-        Return
-    }
-    # Install file
-    $BraveInstall = Start-Process "reg.exe" -ArgumentList "import `"$env:LocalAppData\brave.reg`"" -WindowStyle Hidden -Wait -PassThru
-    if ($BraveInstall.ExitCode -eq 0) {
-        Read-Host -Prompt "Updated Brave settings. Press Enter/Return to continue" | Out-Null
-    }
-    else {
-        Read-Host -Prompt "Install failed! Press Enter/Return to continue" | Out-Null
-    }
+    Import-RemoteRegistryFile $BraveInstallRegistry "brave.reg" "Updated Brave settings."
 }
 
 # Remove Brave settings
 function Uninstall-Brave {
     Show-Header
-    Write-Host "Downloading registry file, please wait..."
-    # Download file
-    try {
-        Invoke-WebRequest $BraveUninstallRegistry -OutFile "$env:LocalAppData\brave.reg"
-    }
-    catch {
-        Read-Host -Prompt "Download failed! Press Enter/Return to continue" | Out-Null
-        Return
-    }
-    # Install file
-    $BraveUninstall = Start-Process "reg.exe" -ArgumentList "import `"$env:LocalAppData\brave.reg`"" -WindowStyle Hidden -Wait -PassThru
-    if ($BraveUninstall.ExitCode -eq 0) {
-        Read-Host -Prompt "Removed Brave settings. Press Enter/Return to continue" | Out-Null
-    }
-    else {
-        Read-Host -Prompt "Remove failed! Press Enter/Return to continue" | Out-Null
-    }
+    Import-RemoteRegistryFile $BraveUninstallRegistry "brave.reg" "Removed Brave settings."
 }
 
 # Install Firefox settings
@@ -183,23 +124,7 @@ function Install-Firefox {
     if ($InstallPath) {
         Uninstall-FirefoxJSON "$InstallPath"
     }
-    # Download file
-    Write-Host "Downloading registry file, please wait..."
-    try {
-        Invoke-WebRequest $FirefoxInstallRegistry -OutFile "$env:LocalAppData\firefox.reg"
-    }
-    catch {
-        Read-Host -Prompt "Download failed! Press Enter/Return to continue" | Out-Null
-        Return
-    }
-    # Install file
-    $FirefoxInstall = Start-Process "reg.exe" -ArgumentList "import `"$env:LocalAppData\firefox.reg`"" -WindowStyle Hidden -Wait -PassThru
-    if ($FirefoxInstall.ExitCode -eq 0) {
-        Read-Host -Prompt "Updated Mozilla Firefox settings. Press Enter/Return to continue" | Out-Null
-    }
-    else {
-        Read-Host -Prompt "Install failed! Press Enter/Return to continue" | Out-Null
-    }
+    Import-RemoteRegistryFile $FirefoxInstallRegistry "firefox.reg" "Updated Mozilla Firefox settings."
 }
 
 # Remove Firefox settings
@@ -213,131 +138,118 @@ function Uninstall-Firefox {
     if ($InstallPath) {
         Uninstall-FirefoxJSON "$InstallPath"
     }
-    # Download file
-    try {
-        Invoke-WebRequest $FirefoxUninstallRegistry -OutFile "$env:LocalAppData\firefox.reg"
-    }
-    catch {
-        Read-Host -Prompt "Download failed! Press Enter/Return to continue" | Out-Null
-        Return
-    }
-    # Install file
-    $FirefoxUninstall = Start-Process "reg.exe" -ArgumentList "import `"$env:LocalAppData\firefox.reg`"" -WindowStyle Hidden -Wait -PassThru
-    if ($FirefoxUninstall.ExitCode -eq 0) {
-        Read-Host -Prompt "Removed Mozilla Firefox settings. Press Enter/Return to continue" | Out-Null
-    }
-    else {
-        Read-Host -Prompt "Remove failed! Press Enter/Return to continue" | Out-Null
-    }
+    Import-RemoteRegistryFile $FirefoxUninstallRegistry "firefox.reg" "Removed Mozilla Firefox settings."
 }
 
 
 # Main menu selection
 function Show-Menu {
-    # Create list for menu options
-    $options = New-Object System.Collections.Generic.List[psobject]
-    # Google Chrome without settings applied
-    $options.Add(@{
-            Label  = "Google Chrome: Update settings"
-            Action = { Install-Chrome }
-        })
-    # Google Chrome with settings applied
-    if (Test-Path "HKLM:\SOFTWARE\Policies\Google\Chrome") {
-        $GoogleChromeCheck = (Get-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Google\Chrome" -ErrorAction SilentlyContinue).AIModeSettings
-        if ($null -ne $GoogleChromeCheck) {
-            $options.Add(@{
-                    Label  = "Google Chrome: Remove settings"
-                    Action = { Uninstall-Chrome }
-                })
-        }
-    }
-    # Microsoft Edge without settings applied
-    $options.Add(@{
-            Label  = "Microsoft Edge: Update settings"
-            Action = { Install-Edge }
-        })
-    # Microsoft Edge with settings applied
-    if (Test-Path "HKLM:\SOFTWARE\Policies\Microsoft\Edge") {
-        $MicrosoftEdgeCheck = (Get-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Edge" -ErrorAction SilentlyContinue).HideFirstRunExperience
-        if ($null -ne $MicrosoftEdgeCheck) {
-            $options.Add(@{
-                    Label  = "Microsoft Edge: Remove settings"
-                    Action = { Uninstall-Edge }
-                })
-        }
-    }
-    # Brave without settings applied
-    $options.Add(@{
-            Label  = "Brave: Update settings"
-            Action = { Install-Brave }
-        })
-    # Brave with settings applied
-    if (Test-Path "HKLM:\SOFTWARE\Policies\BraveSoftware\Brave") {
-        $BraveCheck = (Get-ItemProperty -Path "HKLM:\SOFTWARE\Policies\BraveSoftware\Brave" -ErrorAction SilentlyContinue).BraveAIChatEnabled
-        if ($null -ne $BraveCheck) {
-            $options.Add(@{
-                    Label  = "Brave: Remove settings"
-                    Action = { Uninstall-Brave }
-                })
-        }
-    }
-    # Mozilla Firefox
-    if (Test-Path "HKLM:\SOFTWARE\Mozilla\Mozilla Firefox") {
-        # Find the current version installed, like: 147.0.1 (AArch64 en-US)
-        $FirefoxVersion = (Get-ItemProperty -Path "HKLM:\SOFTWARE\Mozilla\Mozilla Firefox" -ErrorAction SilentlyContinue).CurrentVersion
-        # Find the registry values for the specified version
-        if (Test-Path "HKLM:\SOFTWARE\Mozilla\Mozilla Firefox\$FirefoxVersion\Main") {
-            # Finds the installation path, like: C:\Program Files\Mozilla Firefox
-            $FirefoxPath = (Get-ItemProperty -Path "HKLM:\SOFTWARE\Mozilla\Mozilla Firefox\$FirefoxVersion\Main" -ErrorAction SilentlyContinue)."Install Directory"
-            # Firefox without settings alreay applied
-            $options.Add(@{
-                    Label  = "Mozilla Firefox: Update settings"
-                    Action = { Install-Firefox "$FirefoxPath" }
-                })
-            # Firefox with settings already applied
-            # This script previously used the JSON file for Firefox, so that must be checked in addition to the registry method
-            if ((Test-Path "$FirefoxPath\distribution\policies.json") -or (Test-Path "HKLM:\SOFTWARE\Policies\Mozilla\Firefox\FirefoxHome")) {
+    # The menu is rebuilt on every pass, so the "Remove settings" options appear
+    # or disappear as soon as a configuration is installed or removed
+    while ($true) {
+        # Create list for menu options
+        $options = New-Object System.Collections.Generic.List[psobject]
+        # Google Chrome without settings applied
+        $options.Add(@{
+                Label  = "Google Chrome: Update settings"
+                Action = { Install-Chrome }
+            })
+        # Google Chrome with settings applied
+        if (Test-Path "HKLM:\SOFTWARE\Policies\Google\Chrome") {
+            $GoogleChromeCheck = (Get-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Google\Chrome" -ErrorAction SilentlyContinue).AIModeSettings
+            if ($null -ne $GoogleChromeCheck) {
                 $options.Add(@{
-                        Label  = "Mozilla Firefox: Remove settings"
-                        Action = { Uninstall-Firefox "$FirefoxPath" }
+                        Label  = "Google Chrome: Remove settings"
+                        Action = { Uninstall-Chrome }
                     })
             }
         }
-        else {
-            $options.Add(@{
-                    Label  = "Mozilla Firefox: Update settings"
-                    Action = { Install-Firefox }
-                })
-            if (Test-Path "HKLM:\SOFTWARE\Policies\Mozilla\Firefox\FirefoxHome") {
+        # Microsoft Edge without settings applied
+        $options.Add(@{
+                Label  = "Microsoft Edge: Update settings"
+                Action = { Install-Edge }
+            })
+        # Microsoft Edge with settings applied
+        if (Test-Path "HKLM:\SOFTWARE\Policies\Microsoft\Edge") {
+            $MicrosoftEdgeCheck = (Get-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Edge" -ErrorAction SilentlyContinue).HideFirstRunExperience
+            if ($null -ne $MicrosoftEdgeCheck) {
                 $options.Add(@{
-                        Label  = "Mozilla Firefox: Remove settings"
-                        Action = { Uninstall-Firefox }
+                        Label  = "Microsoft Edge: Remove settings"
+                        Action = { Uninstall-Edge }
                     })
             }
         }
+        # Brave without settings applied
+        $options.Add(@{
+                Label  = "Brave: Update settings"
+                Action = { Install-Brave }
+            })
+        # Brave with settings applied
+        if (Test-Path "HKLM:\SOFTWARE\Policies\BraveSoftware\Brave") {
+            $BraveCheck = (Get-ItemProperty -Path "HKLM:\SOFTWARE\Policies\BraveSoftware\Brave" -ErrorAction SilentlyContinue).BraveAIChatEnabled
+            if ($null -ne $BraveCheck) {
+                $options.Add(@{
+                        Label  = "Brave: Remove settings"
+                        Action = { Uninstall-Brave }
+                    })
+            }
+        }
+        # Mozilla Firefox
+        if (Test-Path "HKLM:\SOFTWARE\Mozilla\Mozilla Firefox") {
+            # Find the current version installed, like: 147.0.1 (AArch64 en-US)
+            $FirefoxVersion = (Get-ItemProperty -Path "HKLM:\SOFTWARE\Mozilla\Mozilla Firefox" -ErrorAction SilentlyContinue).CurrentVersion
+            # Find the registry values for the specified version
+            if (Test-Path "HKLM:\SOFTWARE\Mozilla\Mozilla Firefox\$FirefoxVersion\Main") {
+                # Finds the installation path, like: C:\Program Files\Mozilla Firefox
+                $FirefoxPath = (Get-ItemProperty -Path "HKLM:\SOFTWARE\Mozilla\Mozilla Firefox\$FirefoxVersion\Main" -ErrorAction SilentlyContinue)."Install Directory"
+                # Firefox without settings alreay applied
+                $options.Add(@{
+                        Label  = "Mozilla Firefox: Update settings"
+                        Action = { Install-Firefox "$FirefoxPath" }
+                    })
+                # Firefox with settings already applied
+                # This script previously used the JSON file for Firefox, so that must be checked in addition to the registry method
+                if ((Test-Path "$FirefoxPath\distribution\policies.json") -or (Test-Path "HKLM:\SOFTWARE\Policies\Mozilla\Firefox\FirefoxHome")) {
+                    $options.Add(@{
+                            Label  = "Mozilla Firefox: Remove settings"
+                            Action = { Uninstall-Firefox "$FirefoxPath" }
+                        })
+                }
+            }
+            else {
+                $options.Add(@{
+                        Label  = "Mozilla Firefox: Update settings"
+                        Action = { Install-Firefox }
+                    })
+                if (Test-Path "HKLM:\SOFTWARE\Policies\Mozilla\Firefox\FirefoxHome") {
+                    $options.Add(@{
+                            Label  = "Mozilla Firefox: Remove settings"
+                            Action = { Uninstall-Firefox }
+                        })
+                }
+            }
+        }
+        # Exit option
+        $options.Add(@{
+                Label = "Exit"; Action = { exit }
+            })
+        # Show main menu
+        Show-Header
+        Write-Host "Select an option by typing the number, then pressing Return/Enter on your keyboard to confirm.`n`nYou will need to restart your browser for changes to take effect.`n"
+        for ($i = 0; $i -lt $options.Count; $i++) {
+            Write-Host "[$($i + 1)] $($options[$i].Label)"
+        }
+        $selection = Read-Host "`n#"
+        # Process menu selections
+        # The input has to be compared as a number, otherwise PowerShell compares it as
+        # text, and a negative index would silently select the last option in the list
+        if ($selection -match '^\d+$') {
+            $index = [int]$selection - 1
+            if ($index -ge 0 -and $index -lt $options.Count) {
+                & $options[$index].Action
+            }
+        }
     }
-    # Exit option
-    $options.Add(@{
-            Label = "Exit"; Action = { exit }
-        })
-    # Show main menu
-    Show-Header
-    Write-Host "Select an option by typing the number, then pressing Return/Enter on your keyboard to confirm.`n`nYou will need to restart your browser for changes to take effect.`n"
-    for ($i = 0; $i -lt $options.Count; $i++) {
-        Write-Host "[$($i + 1)] $($options[$i].Label)"
-    }
-    $selection = Read-Host "`n#"
-    # Process menu selections
-    if ($selection -match '^\d+$' -and $selection -le $options.Count) {
-        $index = [int]$selection - 1
-        & $options[$index].Action
-        # Return to main menu after complete
-        Show-Menu
-    }
-    else {
-        Show-Menu
-    }
-
 }
 
 Show-Menu

@@ -18,7 +18,7 @@ BRAVE_MAC_CONFIG="$BASEURL/brave/brave.mobileconfig"
 
 # Generate a temporary directory on macOS instead of broken default $TMPDIR
 if [ "$OS" = "Darwin" ]; then
-    TMPDIR=`mktemp -d`
+    TMPDIR=$(mktemp -d) || { echo "Could not create a temporary directory."; exit 1; }
 fi
 
 # Get command to run as root
@@ -136,7 +136,9 @@ _uninstall_chromium_flatpak() {
     _show_header
     FLATPAK_ARCH=$(flatpak --default-arch)
     FLATPAK_PATH="$HOME/.local/share/flatpak/extension/org.chromium.Chromium.Extension.just-the-browser/$FLATPAK_ARCH/1/policies/managed"
-    rm "$FLATPAK_PATH/managed_policies.json" || { read -p "Remove failed! Press Enter/Return to continue."; return; }
+    if [ -e "$FLATPAK_PATH/managed_policies.json" ]; then
+        rm "$FLATPAK_PATH/managed_policies.json" || { read -p "Remove failed! Press Enter/Return to continue."; return; }
+    fi
     read -p "Removed Chromium settings. Press Enter/Return to continue."
 }
 
@@ -212,7 +214,9 @@ _uninstall_firefox_flatpak() {
     _show_header
     FLATPAK_ARCH=$(flatpak --default-arch)
     FLATPAK_PATH="$HOME/.local/share/flatpak/extension/org.mozilla.firefox.systemconfig/$FLATPAK_ARCH/stable/policies"
-    rm "$FLATPAK_PATH/policies.json" || { read -p "Remove failed! Press Enter/Return to continue."; return; }
+    if [ -e "$FLATPAK_PATH/policies.json" ]; then
+        rm "$FLATPAK_PATH/policies.json" || { read -p "Remove failed! Press Enter/Return to continue."; return; }
+    fi
     read -p "Removed Firefox settings. Press Enter/Return to continue."
 }
 
@@ -226,7 +230,7 @@ _install_brave() {
         open "$TMPDIR/brave.mobileconfig"
         open -b "com.apple.systempreferences"
         # Prompt user to accept file
-        echo -e "\nIn the System Settings application, navigate to General > Device Management, then open Brave settings and click the Install button.\n\nIn older macOS versions with System Preferences, this is in the Profiles section.\n"
+        echo -e "\nIn the System Settings application, navigate to General > Device Management, then open 'Brave Browser settings' and click the Install button.\n\nIn older macOS versions with System Preferences, this is in the Profiles section.\n"
         read -p "Press Enter/Return to continue."
     else
         _confirm_root
@@ -241,7 +245,7 @@ _uninstall_brave() {
     _show_header
     if [ "$OS" = "Darwin" ]; then
         open -b "com.apple.systempreferences"
-        echo -e "\nIn the System Settings application, navigate to General > Device Management, then select 'Brave settings' and click the remove (-) button.\n\nIn older macOS versions with System Preferences, this is in the Profiles section.\n"
+        echo -e "\nIn the System Settings application, navigate to General > Device Management, then select 'Brave Browser settings' and click the remove (-) button.\n\nIn older macOS versions with System Preferences, this is in the Profiles section.\n"
         read -p "Press Enter/Return to continue."
     else
         _confirm_root
@@ -252,107 +256,120 @@ _uninstall_brave() {
 
 # Main menu selection
 _main() {
-    # Create list for menu options
-    declare -a options=()
-    # Google Chrome without settings applied
-    if [ "$OS" = "Darwin" ]; then
-        options+=("Google Chrome: Update settings")
-    elif [ "$OS" = "Linux" ] && { [ -x "$(command -v google-chrome)" ] || [ -x "$(command -v google-chrome-stable)" ]; }; then
-        options+=("Google Chrome: Update settings")
-    fi
-    # Google Chrome with settings already applied
-    if [ "$OS" = "Darwin" ]; then
-        options+=("Google Chrome: Remove settings")
-    elif [ "$OS" = "Linux" ] && [ -e "/etc/opt/chrome/policies/managed/managed_policies.json" ]; then
-        options+=("Google Chrome: Remove settings")
-    fi
-    # Chromium without settings applied
-    if [ "$OS" = "Linux" ] && { [ -x "$(command -v chromium-browser)" ] || [ -x "$(command -v chromium)" ]; }; then
-        options+=("Chromium: Update settings")
-    fi
-    # Chromium with settings already applied
-    if [ "$OS" = "Linux" ] && [ -e "/etc/chromium-browser/policies/managed/managed_policies.json" ]; then
-        options+=("Chromium: Remove settings")
-    elif [ "$OS" = "Linux" ] && [ -e "/etc/chromium/policies/managed/managed_policies.json" ]; then
-        options+=("Chromium: Remove settings")
-    fi
-    # Chromium Flatpak
-    if [ "$OS" = "Linux" ] && [ -x "$(command -v flatpak)" ] && flatpak list | grep -q "org.chromium.Chromium"; then
-        options+=("Chromium Flatpak: Update settings")
-        options+=("Chromium Flatpak: Remove settings")
-    fi
-    # Microsoft Edge
-    if [ "$OS" = "Darwin" ]; then
-        options+=("Microsoft Edge: Update settings")
-        options+=("Microsoft Edge: Remove settings")
-    fi
-    # Firefox without settings applied
-    if [ "$OS" = "Darwin" ]; then
-        options+=("Mozilla Firefox: Update settings")
-    elif [ "$OS" = "Linux" ] && [ -x "$(command -v firefox)" ]; then
-        options+=("Mozilla Firefox: Update settings")
-    fi
-    # Firefox with settings already applied
-    if [ "$OS" = "Darwin" ]; then
-        options+=("Mozilla Firefox: Remove settings")
-    elif [ "$OS" = "Linux" ] && [ -e "/etc/firefox/policies/policies.json" ]; then
-        options+=("Mozilla Firefox: Remove settings")
-    fi
-    # Firefox Flatpak
-    if [ "$OS" = "Linux" ] && [ -x "$(command -v flatpak)" ] && flatpak list | grep -q "org.mozilla.firefox"; then
-        options+=("Firefox Flatpak: Update settings")
-        options+=("Firefox Flatpak: Remove settings")
-    fi
-    # Brave without settings applied
-    if [ "$OS" = "Darwin" ]; then
-        options+=("Brave: Update settings")
-    elif [ "$OS" = "Linux" ] && [ -x "$(command -v brave-browser)" ]; then
-        options+=("Brave: Update settings")
-    fi
-    # Brave with settings already applied
-    if [ "$OS" = "Darwin" ]; then
-        options+=("Brave: Remove settings")
-    elif [ "$OS" = "Linux" ] && [ -e "/etc/brave/policies/managed/managed_policies.json" ]; then
-        options+=("Brave: Remove settings")
-    fi
-    # Add exit option
-    options+=("Exit")
-    # Show main menu
-    _show_header
-    echo -e "Select an option by typing the number, then pressing Return/Enter on your keyboard to confirm.\n\nYou will need to restart your browser for changes to take effect.\n"
-    select choice in "${options[@]}"; do
-        if [ "$choice" = "Google Chrome: Update settings" ]; then
-            _install_chrome
-        elif [ "$choice" = "Google Chrome: Remove settings" ]; then
-            _uninstall_chrome
-        elif [ "$choice" = "Chromium: Update settings" ]; then
-            _install_chromium
-        elif [ "$choice" = "Chromium: Remove settings" ]; then
-            _uninstall_chromium
-        elif [ "$choice" = "Chromium Flatpak: Update settings" ]; then
-            _install_chromium_flatpak
-        elif [ "$choice" = "Chromium Flatpak: Remove settings" ]; then
-            _uninstall_chromium_flatpak
-        elif [ "$choice" = "Microsoft Edge: Update settings" ]; then
-            _install_edge
-        elif [ "$choice" = "Microsoft Edge: Remove settings" ]; then
-            _uninstall_edge
-        elif [ "$choice" = "Mozilla Firefox: Update settings" ]; then
-            _install_firefox
-        elif [ "$choice" = "Mozilla Firefox: Remove settings" ]; then
-            _uninstall_firefox
-        elif [ "$choice" = "Firefox Flatpak: Update settings" ]; then
-            _install_firefox_flatpak
-        elif [ "$choice" = "Firefox Flatpak: Remove settings" ]; then
-            _uninstall_firefox_flatpak
-        elif [ "$choice" = "Brave: Update settings" ]; then
-            _install_brave
-        elif [ "$choice" = "Brave: Remove settings" ]; then
-            _uninstall_brave
-        elif [ "$choice" = "Exit" ]; then
+    # The menu is rebuilt on every pass, so the "Remove settings" options appear
+    # or disappear as soon as a configuration is installed or removed
+    while true; do
+        # Create list for menu options
+        declare -a options=()
+        # Google Chrome without settings applied
+        if [ "$OS" = "Darwin" ]; then
+            options+=("Google Chrome: Update settings")
+        elif [ "$OS" = "Linux" ] && { [ -x "$(command -v google-chrome)" ] || [ -x "$(command -v google-chrome-stable)" ]; }; then
+            options+=("Google Chrome: Update settings")
+        fi
+        # Google Chrome with settings already applied
+        if [ "$OS" = "Darwin" ]; then
+            options+=("Google Chrome: Remove settings")
+        elif [ "$OS" = "Linux" ] && [ -e "/etc/opt/chrome/policies/managed/managed_policies.json" ]; then
+            options+=("Google Chrome: Remove settings")
+        fi
+        # Chromium without settings applied
+        if [ "$OS" = "Linux" ] && { [ -x "$(command -v chromium-browser)" ] || [ -x "$(command -v chromium)" ]; }; then
+            options+=("Chromium: Update settings")
+        fi
+        # Chromium with settings already applied
+        if [ "$OS" = "Linux" ] && [ -e "/etc/chromium-browser/policies/managed/managed_policies.json" ]; then
+            options+=("Chromium: Remove settings")
+        elif [ "$OS" = "Linux" ] && [ -e "/etc/chromium/policies/managed/managed_policies.json" ]; then
+            options+=("Chromium: Remove settings")
+        fi
+        # Chromium Flatpak
+        if [ "$OS" = "Linux" ] && [ -x "$(command -v flatpak)" ] && flatpak list | grep -q "org.chromium.Chromium"; then
+            options+=("Chromium Flatpak: Update settings")
+            options+=("Chromium Flatpak: Remove settings")
+        fi
+        # Microsoft Edge
+        if [ "$OS" = "Darwin" ]; then
+            options+=("Microsoft Edge: Update settings")
+            options+=("Microsoft Edge: Remove settings")
+        fi
+        # Firefox without settings applied
+        if [ "$OS" = "Darwin" ]; then
+            options+=("Mozilla Firefox: Update settings")
+        elif [ "$OS" = "Linux" ] && [ -x "$(command -v firefox)" ]; then
+            options+=("Mozilla Firefox: Update settings")
+        fi
+        # Firefox with settings already applied
+        if [ "$OS" = "Darwin" ]; then
+            options+=("Mozilla Firefox: Remove settings")
+        elif [ "$OS" = "Linux" ] && [ -e "/etc/firefox/policies/policies.json" ]; then
+            options+=("Mozilla Firefox: Remove settings")
+        fi
+        # Firefox Flatpak
+        if [ "$OS" = "Linux" ] && [ -x "$(command -v flatpak)" ] && flatpak list | grep -q "org.mozilla.firefox"; then
+            options+=("Firefox Flatpak: Update settings")
+            options+=("Firefox Flatpak: Remove settings")
+        fi
+        # Brave without settings applied
+        if [ "$OS" = "Darwin" ]; then
+            options+=("Brave: Update settings")
+        elif [ "$OS" = "Linux" ] && [ -x "$(command -v brave-browser)" ]; then
+            options+=("Brave: Update settings")
+        fi
+        # Brave with settings already applied
+        if [ "$OS" = "Darwin" ]; then
+            options+=("Brave: Remove settings")
+        elif [ "$OS" = "Linux" ] && [ -e "/etc/brave/policies/managed/managed_policies.json" ]; then
+            options+=("Brave: Remove settings")
+        fi
+        # Add exit option
+        options+=("Exit")
+        # Show main menu
+        _show_header
+        echo -e "Select an option by typing the number, then pressing Return/Enter on your keyboard to confirm.\n\nYou will need to restart your browser for changes to take effect.\n"
+        # Detect Ctrl+D, which ends the select loop without running anything
+        eof=1
+        select choice in "${options[@]}"; do
+            eof=0
+            if [ "$choice" = "Google Chrome: Update settings" ]; then
+                _install_chrome
+            elif [ "$choice" = "Google Chrome: Remove settings" ]; then
+                _uninstall_chrome
+            elif [ "$choice" = "Chromium: Update settings" ]; then
+                _install_chromium
+            elif [ "$choice" = "Chromium: Remove settings" ]; then
+                _uninstall_chromium
+            elif [ "$choice" = "Chromium Flatpak: Update settings" ]; then
+                _install_chromium_flatpak
+            elif [ "$choice" = "Chromium Flatpak: Remove settings" ]; then
+                _uninstall_chromium_flatpak
+            elif [ "$choice" = "Microsoft Edge: Update settings" ]; then
+                _install_edge
+            elif [ "$choice" = "Microsoft Edge: Remove settings" ]; then
+                _uninstall_edge
+            elif [ "$choice" = "Mozilla Firefox: Update settings" ]; then
+                _install_firefox
+            elif [ "$choice" = "Mozilla Firefox: Remove settings" ]; then
+                _uninstall_firefox
+            elif [ "$choice" = "Firefox Flatpak: Update settings" ]; then
+                _install_firefox_flatpak
+            elif [ "$choice" = "Firefox Flatpak: Remove settings" ]; then
+                _uninstall_firefox_flatpak
+            elif [ "$choice" = "Brave: Update settings" ]; then
+                _install_brave
+            elif [ "$choice" = "Brave: Remove settings" ]; then
+                _uninstall_brave
+            elif [ "$choice" = "Exit" ]; then
+                exit 0
+            else
+                read -p "Invalid option. Press Enter/Return to continue."
+            fi
+            # Leave the select loop so the menu is drawn again with fresh options
+            break
+        done
+        if [ "$eof" = 1 ]; then
+            echo ""
             exit 0
-        else
-            read -p "Invalid option. Press Enter/Return to continue.";
         fi
     done
 }
