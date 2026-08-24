@@ -36,9 +36,13 @@ that does not follow along quietly stops working: a user believes a feature is
 turned off when nothing is turning it off any more.
 
 The `upstream_drift.yml` GitHub Action compares this fork's policies with
-upstream every week and opens a single issue when they differ, closing it again
-once they match. It compares the parsed policies rather than the file text, so
-the fork's own URL and branding changes are not reported as differences.
+upstream every week. It compares the parsed policies rather than the file text,
+so the fork's own URL and branding changes are not reported as differences.
+
+Issues are disabled on this fork, so a drift is reported by failing the workflow
+run and writing the details to the run summary — GitHub emails the repository
+owner when a scheduled run fails. If Issues are enabled later, the workflow could
+file the report as an issue instead.
 
 To run the same comparison yourself:
 
