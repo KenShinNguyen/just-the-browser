@@ -51,6 +51,79 @@ _legacy_cleanup() {
     fi
 }
 
+# Download a file and check that it is the kind of file we asked for, before
+# anything is written to a live policy path. A captive portal, a proxy notice or
+# an error page served with a 200 status would otherwise be installed as
+# configuration, or handed to the browser as policy.
+# Usage: _fetch_verified <url> <json|plist> <output path>
+_fetch_verified() {
+    local url="$1"
+    local kind="$2"
+    local out="$3"
+    local first
+    curl -Lfs -o "$out" "$url" || { echo "Download failed."; return 1; }
+    if [ ! -s "$out" ]; then
+        echo "The downloaded file is empty."
+        return 1
+    fi
+    # The first non-whitespace character is enough to spot an HTML page
+    first=$(head -c 512 "$out" | tr -d '[:space:]' | cut -c1)
+    if [ "$kind" = "json" ]; then
+        if [ "$first" != "{" ]; then
+            echo "The downloaded file is not a JSON configuration file."
+            return 1
+        fi
+        # python3 is not part of the baseline, so only use it when it is there
+        if [ -x "$(command -v python3)" ]; then
+            python3 -c 'import json,sys; json.load(open(sys.argv[1]))' "$out" 2>/dev/null || {
+                echo "The downloaded file is not valid JSON."
+                return 1
+            }
+        fi
+    elif [ "$kind" = "plist" ]; then
+        if [ "$first" != "<" ] || ! grep -q "<!DOCTYPE plist" "$out"; then
+            echo "The downloaded file is not a configuration profile."
+            return 1
+        fi
+        # plutil ships with macOS, which is the only place profiles are used
+        if [ -x "$(command -v plutil)" ]; then
+            plutil -lint "$out" >/dev/null 2>&1 || {
+                echo "The downloaded configuration profile is not valid."
+                return 1
+            }
+        fi
+    fi
+    return 0
+}
+
+# Download a policy file, check it, and only then copy it into place. The file
+# is verified in a temporary location so a bad download never overwrites a
+# working configuration.
+# Usage: _install_json <url> <directory> <filename> [root]
+_install_json() {
+    local url="$1"
+    local dir="$2"
+    local name="$3"
+    local as_root="$4"
+    local run=""
+    local tmp
+    if [ "$as_root" = "root" ]; then
+        run="${AS_ROOT}"
+    fi
+    tmp=$(mktemp) || { echo "Could not create a temporary file."; return 1; }
+    if ! _fetch_verified "$url" json "$tmp"; then
+        rm -f "$tmp"
+        return 1
+    fi
+    $run mkdir -p "$dir" || { rm -f "$tmp"; return 1; }
+    $run cp "$tmp" "$dir/$name" || { rm -f "$tmp"; return 1; }
+    # mktemp creates the file as 600, but the browser reads policies as the
+    # normal user, so the installed copy has to be world readable
+    $run chmod 644 "$dir/$name" || { rm -f "$tmp"; return 1; }
+    rm -f "$tmp"
+    return 0
+}
+
 # Render initial interface for all pages
 _show_header() {
     clear
@@ -63,7 +136,7 @@ _install_chrome() {
     echo "Downloading configuration, please wait..."
     if [ "$OS" = "Darwin" ]; then
         # Download and open configuration file
-        curl -Lfs -o "$TMPDIR/chrome.mobileconfig" "$GOOGLE_CHROME_MAC_CONFIG" || { read -p "Download failed! Press Enter/Return to continue."; return; }
+        _fetch_verified "$GOOGLE_CHROME_MAC_CONFIG" plist "$TMPDIR/chrome.mobileconfig" || { read -p "Press Enter/Return to continue."; return; }
         open "$TMPDIR/chrome.mobileconfig"
         open -b "com.apple.systempreferences"
         # Prompt user to accept file
@@ -71,8 +144,7 @@ _install_chrome() {
         read -p "Press Enter/Return to continue."
     else
         _confirm_root
-        "${AS_ROOT}" mkdir -p "/etc/opt/chrome/policies/managed"
-        "${AS_ROOT}" curl -Lfs -o "/etc/opt/chrome/policies/managed/managed_policies.json" "$CHROME_SETTINGS" || { read -p "Download failed! Press Enter/Return to continue."; return; }
+        _install_json "$CHROME_SETTINGS" "/etc/opt/chrome/policies/managed" "managed_policies.json" root || { read -p "Press Enter/Return to continue."; return; }
         read -p "Installed Chrome settings. Press Enter/Return to continue."
     fi
 }
@@ -97,11 +169,9 @@ _install_chromium() {
     echo "Downloading configuration, please wait..."
     _confirm_root
     # Install to /etc/chromium-browser/policies/managed for Ubuntu and related distributions
-    "${AS_ROOT}" mkdir -p "/etc/chromium-browser/policies/managed"
-    "${AS_ROOT}" curl -Lfs -o "/etc/chromium-browser/policies/managed/managed_policies.json" "$CHROME_SETTINGS" || { read -p "Download failed! Press Enter/Return to continue."; return; }
+    _install_json "$CHROME_SETTINGS" "/etc/chromium-browser/policies/managed" "managed_policies.json" root || { read -p "Press Enter/Return to continue."; return; }
     # Install to /etc/chromium/policies/managed for other distributions
-    "${AS_ROOT}" mkdir -p "/etc/chromium/policies/managed"
-    "${AS_ROOT}" curl -Lfs -o "/etc/chromium/policies/managed/managed_policies.json" "$CHROME_SETTINGS" || { read -p "Download failed! Press Enter/Return to continue."; return; }
+    _install_json "$CHROME_SETTINGS" "/etc/chromium/policies/managed" "managed_policies.json" root || { read -p "Press Enter/Return to continue."; return; }
     # Completed
     read -p "Installed Chromium settings. Press Enter/Return to continue."
 }
@@ -126,8 +196,7 @@ _install_chromium_flatpak() {
     _show_header
     FLATPAK_ARCH=$(flatpak --default-arch)
     FLATPAK_PATH="$HOME/.local/share/flatpak/extension/org.chromium.Chromium.Extension.just-the-browser/$FLATPAK_ARCH/1/policies/managed"
-    mkdir -p "$FLATPAK_PATH"
-    curl -Lfs -o "$FLATPAK_PATH/managed_policies.json" "$CHROME_SETTINGS" || { read -p "Download failed! Press Enter/Return to continue."; return; }
+    _install_json "$CHROME_SETTINGS" "$FLATPAK_PATH" "managed_policies.json" || { read -p "Press Enter/Return to continue."; return; }
     read -p "Installed Chromium settings. Press Enter/Return to continue."
 }
 
@@ -147,7 +216,7 @@ _install_edge() {
     _show_header
     echo "Downloading configuration, please wait..."
     # Download and open configuration file
-    curl -Lfs -o "$TMPDIR/edge.mobileconfig" "$MICROSOFT_EDGE_MAC_CONFIG" || { read -p "Download failed! Press Enter/Return to continue."; return; }
+    _fetch_verified "$MICROSOFT_EDGE_MAC_CONFIG" plist "$TMPDIR/edge.mobileconfig" || { read -p "Press Enter/Return to continue."; return; }
     open "$TMPDIR/edge.mobileconfig"
     open -b "com.apple.systempreferences"
     # Prompt user to accept file
@@ -170,7 +239,7 @@ _install_firefox() {
     echo "Downloading configuration, please wait..."
     if [ "$OS" = "Darwin" ]; then
         # Download and open configuration file
-        curl -Lfs -o "$TMPDIR/firefox.mobileconfig" "$FIREFOX_MAC_CONFIG" || { read -p "Download failed! Press Enter/Return to continue."; return; }
+        _fetch_verified "$FIREFOX_MAC_CONFIG" plist "$TMPDIR/firefox.mobileconfig" || { read -p "Press Enter/Return to continue."; return; }
         open "$TMPDIR/firefox.mobileconfig"
         open -b "com.apple.systempreferences"
         # Prompt user to accept file
@@ -178,8 +247,7 @@ _install_firefox() {
         read -p "Press Enter/Return to continue."
     else
         _confirm_root
-        "${AS_ROOT}" mkdir -p "/etc/firefox/policies/"
-        "${AS_ROOT}" curl -Lfs -o "/etc/firefox/policies/policies.json" "$FIREFOX_SETTINGS" || { read -p "Download failed! Press Enter/Return to continue."; return; }
+        _install_json "$FIREFOX_SETTINGS" "/etc/firefox/policies" "policies.json" root || { read -p "Press Enter/Return to continue."; return; }
         read -p "Updated Firefox settings. Press Enter/Return to continue."
     fi
 }
@@ -204,8 +272,7 @@ _install_firefox_flatpak() {
     _show_header
     FLATPAK_ARCH=$(flatpak --default-arch)
     FLATPAK_PATH="$HOME/.local/share/flatpak/extension/org.mozilla.firefox.systemconfig/$FLATPAK_ARCH/stable/policies"
-    mkdir -p "$FLATPAK_PATH"
-    curl -Lfs -o "$FLATPAK_PATH/policies.json" "$FIREFOX_SETTINGS" || { read -p "Download failed! Press Enter/Return to continue."; return; }
+    _install_json "$FIREFOX_SETTINGS" "$FLATPAK_PATH" "policies.json" || { read -p "Press Enter/Return to continue."; return; }
     read -p "Installed Firefox settings. Press Enter/Return to continue."
 }
 
@@ -226,7 +293,7 @@ _install_brave() {
     echo "Downloading configuration, please wait..."
     if [ "$OS" = "Darwin" ]; then
         # Download and open configuration file
-        curl -Lfs -o "$TMPDIR/brave.mobileconfig" "$BRAVE_MAC_CONFIG" || { read -p "Download failed! Press Enter/Return to continue."; return; }
+        _fetch_verified "$BRAVE_MAC_CONFIG" plist "$TMPDIR/brave.mobileconfig" || { read -p "Press Enter/Return to continue."; return; }
         open "$TMPDIR/brave.mobileconfig"
         open -b "com.apple.systempreferences"
         # Prompt user to accept file
@@ -234,8 +301,7 @@ _install_brave() {
         read -p "Press Enter/Return to continue."
     else
         _confirm_root
-        "${AS_ROOT}" mkdir -p "/etc/brave/policies/managed"
-        "${AS_ROOT}" curl -Lfs -o "/etc/brave/policies/managed/managed_policies.json" "$BRAVE_SETTINGS" || { read -p "Download failed! Press Enter/Return to continue."; return; }
+        _install_json "$BRAVE_SETTINGS" "/etc/brave/policies/managed" "managed_policies.json" root || { read -p "Press Enter/Return to continue."; return; }
         read -p "Installed Brave settings. Press Enter/Return to continue."
     fi
 }

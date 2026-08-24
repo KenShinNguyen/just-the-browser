@@ -1,0 +1,78 @@
+# This repository is a fork. Upstream keeps adding browser policies as new AI
+# and telemetry features ship, and a fork that does not follow along quietly
+# stops working: users think a feature is turned off when nothing turns it off.
+# This checks weekly and opens (or updates) a single issue when the fork drifts.
+
+name: Upstream drift
+on:
+  schedule:
+    # Mondays at 07:00 UTC
+    - cron: '0 7 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  drift:
+    name: Compare policies with upstream
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+    steps:
+    - name: Checkout this fork
+      uses: actions/checkout@v4
+
+    - name: Checkout upstream
+      run: |
+        git clone --depth 1 \
+          https://github.com/corbindavenport/just-the-browser upstream-checkout
+
+    - name: Compare policies
+      id: compare
+      run: |
+        set +e
+        python3 scripts/check_upstream_drift.py upstream-checkout > drift-report.md
+        echo "drift=$?" >> "$GITHUB_OUTPUT"
+        cat drift-report.md
+
+    - name: Open or update the drift issue
+      if: steps.compare.outputs.drift == '1'
+      env:
+        GH_TOKEN: ${{ github.token }}
+        TITLE: 'Fork is out of sync with upstream policies'
+      run: |
+        {
+          echo "This is posted automatically by the \`upstream_drift.yml\` workflow."
+          echo
+          cat drift-report.md
+          echo
+          echo "_Last checked: $(date -u '+%Y-%m-%d %H:%M UTC')_"
+        } > issue-body.md
+
+        EXISTING=$(gh issue list --state open --search "$TITLE in:title" \
+          --json number,title \
+          --jq ".[] | select(.title == \"$TITLE\") | .number" | head -n 1)
+
+        if [ -n "$EXISTING" ]; then
+          echo "Updating issue #$EXISTING"
+          gh issue edit "$EXISTING" --body-file issue-body.md
+        else
+          echo "Opening a new issue"
+          gh issue create --title "$TITLE" --body-file issue-body.md
+        fi
+
+    - name: Close the drift issue when back in sync
+      if: steps.compare.outputs.drift == '0'
+      env:
+        GH_TOKEN: ${{ github.token }}
+        TITLE: 'Fork is out of sync with upstream policies'
+      run: |
+        EXISTING=$(gh issue list --state open --search "$TITLE in:title" \
+          --json number,title \
+          --jq ".[] | select(.title == \"$TITLE\") | .number" | head -n 1)
+        if [ -n "$EXISTING" ]; then
+          gh issue close "$EXISTING" \
+            --comment "The fork's policies match upstream again, closing automatically."
+        fi
