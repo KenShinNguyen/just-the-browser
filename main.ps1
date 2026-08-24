@@ -11,6 +11,12 @@ if ($args.Count -eq 0) {
     $BaseURL = $args[0]
 }
 
+# Version of the browser policies this copy of the script installs. It is shown
+# in the header, so a user reporting a browser problem can say which policy set
+# they applied. scripts/validate_configs.py keeps this in step with the VERSION
+# file and with main.sh.
+$PolicyVersion = "2026.08.24"
+
 $OS = Get-CimInstance Win32_OperatingSystem
 $MicrosoftEdgeInstallRegistry = "$BaseURL/edge/install.reg"
 $MicrosoftEdgeUninstallRegistry = "$BaseURL/edge/uninstall.reg"
@@ -24,7 +30,7 @@ $BraveUninstallRegistry = "$BaseURL/brave/uninstall.reg"
 # Render initial interface for all pages
 function Show-Header {
     Clear-Host
-    Write-Host "`nJust the Browser ($($OS.Caption) Build $($OS.BuildNumber))`n========`n"
+    Write-Host "`nJust the Browser ($($OS.Caption) Build $($OS.BuildNumber))`n========`nPolicy version: $PolicyVersion`nSource: $BaseURL`n"
 }
 
 # Download a registry file and import it with reg.exe
@@ -38,7 +44,18 @@ function Import-RemoteRegistryFile {
         [Parameter(Position = 2, Mandatory = $true)]
         [String]$SuccessMessage
     )
-    $LocalPath = Join-Path $env:LocalAppData $FileName
+    # The import runs elevated, so the download goes to a freshly created
+    # directory with a random name rather than a predictable path that could
+    # already hold a file, or a link, put there by something else
+    $ScratchDir = Join-Path $env:LocalAppData ("JustTheBrowser-" + [System.IO.Path]::GetRandomFileName())
+    try {
+        New-Item -Path $ScratchDir -ItemType Directory -Force -ErrorAction Stop | Out-Null
+    }
+    catch {
+        Read-Host -Prompt "Could not create a temporary directory! Press Enter/Return to continue" | Out-Null
+        return
+    }
+    $LocalPath = Join-Path $ScratchDir $FileName
     Write-Host "Downloading registry file, please wait..."
     try {
         # Download file
@@ -81,7 +98,7 @@ function Import-RemoteRegistryFile {
         }
     }
     finally {
-        Remove-Item -Path $LocalPath -Force -ErrorAction SilentlyContinue
+        Remove-Item -Path $ScratchDir -Recurse -Force -ErrorAction SilentlyContinue
     }
 }
 
