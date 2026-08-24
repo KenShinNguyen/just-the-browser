@@ -27,6 +27,45 @@ together with ShellCheck for `main.sh`, PSScriptAnalyzer for `main.ps1`, and a
 test build of the website. If a setting only applies to one platform, add it to
 the `PLATFORM_ONLY` list in the script with a comment explaining why.
 
+### Keeping up with upstream
+
+This repository is a fork of
+[corbindavenport/just-the-browser](https://github.com/corbindavenport/just-the-browser).
+Upstream adds policies as browsers ship new AI and telemetry features, so a fork
+that does not follow along quietly stops working: a user believes a feature is
+turned off when nothing is turning it off any more.
+
+The `upstream_drift.yml` GitHub Action compares this fork's policies with
+upstream every week and opens a single issue when they differ, closing it again
+once they match. It compares the parsed policies rather than the file text, so
+the fork's own URL and branding changes are not reported as differences.
+
+To run the same comparison yourself:
+
+```shell
+git clone --depth 1 https://github.com/corbindavenport/just-the-browser /tmp/upstream
+python3 scripts/check_upstream_drift.py /tmp/upstream
+```
+
+If this fork deliberately differs on a policy, add its name to
+`scripts/upstream_divergence.json` with a note in `_notes`, and it stops being
+reported.
+
+### Downloaded files are checked before they are installed
+
+`main.sh` and `main.ps1` fetch configuration over the network and apply it with
+administrator or root access. A captive portal, a proxy notice, or an error page
+served with a `200` status would otherwise be written straight onto a live policy
+path or handed to `reg.exe`.
+
+Both scripts now download to a temporary location first and check the file is
+the kind it should be — JSON for the Linux policy files, a property list for the
+macOS profiles, and a `Windows Registry Editor Version 5.00` header for the
+registry files — before anything is installed. A failed check leaves any existing
+configuration untouched. If you add a new download, route it through
+`_fetch_verified` / `_install_json` in `main.sh` or `Import-RemoteRegistryFile`
+in `main.ps1` rather than calling `curl` or `Invoke-WebRequest` directly.
+
 ### Working on the scripts
 
 The Windows script is a **PowerShell v5.0** script, so it can run out of the box on Windows 8.1, Windows 10, and Windows 11.

@@ -1,0 +1,8 @@
+{
+  "_comment": "Policies this fork deliberately differs from upstream on. Listing a policy name under its browser stops scripts/check_upstream_drift.py from reporting it. Record the reason in _notes, and remove entries once they are no longer intentional.",
+  "_notes": {},
+  "chrome": [],
+  "edge": [],
+  "firefox": [],
+  "brave": []
+}

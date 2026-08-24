@@ -50,6 +50,27 @@ function Import-RemoteRegistryFile {
             Read-Host -Prompt "Download failed! Press Enter/Return to continue" | Out-Null
             return
         }
+        # Check the download really is a registry file before handing it to
+        # reg.exe. A captive portal or an error page served with a 200 status
+        # would otherwise be imported into HKEY_LOCAL_MACHINE.
+        # Get-Content returns an empty collection for an empty file, and
+        # comparing a collection with -notmatch filters it instead of returning
+        # a boolean, so the result is cast to a string first
+        $FirstLine = ""
+        try {
+            $Content = Get-Content -Path $LocalPath -TotalCount 1 -ErrorAction Stop
+            if ($null -ne $Content) {
+                $FirstLine = [String]$Content
+            }
+        }
+        catch {
+            $FirstLine = ""
+        }
+        if ([String]::IsNullOrWhiteSpace($FirstLine) -or
+            $FirstLine -notmatch '^\s*Windows Registry Editor Version 5\.00') {
+            Read-Host -Prompt "The downloaded file is not a registry file! Press Enter/Return to continue" | Out-Null
+            return
+        }
         # Import file
         $Import = Start-Process "reg.exe" -ArgumentList "import `"$LocalPath`"" -WindowStyle Hidden -Wait -PassThru
         if ($Import.ExitCode -eq 0) {

@@ -20,6 +20,9 @@ jobs:
     - name: Check that every platform has the same settings
       run: python3 scripts/validate_configs.py
 
+    - name: Check the helper scripts compile
+      run: python3 -m compileall -q scripts/
+
   scripts:
     name: Install scripts
     runs-on: ubuntu-latest
