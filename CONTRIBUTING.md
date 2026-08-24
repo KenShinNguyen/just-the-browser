@@ -4,7 +4,7 @@ Do you want to help improve Just the Browser? Here's what you need to know.
 
 ### Configuration changes
 
-**New configuration settings should be discussed in an issue on GitHub first.** Everyone's definition of bloatware and privacy is different, and Just the Browser aims more for sensible defaults rather than a fully locked-down experience. Pull requests or other requests to turn of Google Safe Browsing, search engine auto-complete suggestions, or other similar functionality will not be considered. 
+**New configuration settings should be proposed in the description of a pull request.** Issues are disabled on this fork, so open a draft pull request and explain the reasoning there before filling it in. Everyone's definition of bloatware and privacy is different, and Just the Browser aims more for sensible defaults rather than a fully locked-down experience. Pull requests or other requests to turn of Google Safe Browsing, search engine auto-complete suggestions, or other similar functionality will not be considered. 
 
 If you are contributing updates to the browser configuration settings, your changes should be synchronized across the configuration files for all platforms. In the browser's directory (e.g. `chrome` or `firefox`):
 
@@ -77,6 +77,34 @@ The Windows script is a **PowerShell v5.0** script, so it can run out of the box
 If you are working on the script, please ensure you are not using PowerShell features or syntax from later versions, such as PowerShell 7/PowerShell Core.
 
 The Linux and macOS script is a Bash script. The baseline testing environment is the **Bash v3.2** shell bundled with macOS.
+
+### Policy version
+
+Both installers print a policy version in their header, so a user reporting a
+browser problem can say which set of policies they applied. The version lives in
+the `VERSION` file, and is repeated in `main.sh` and `main.ps1` so that the
+number shown is the one belonging to the script that is actually running, rather
+than something fetched separately.
+
+**When you change a browser policy, bump all three to the current date** in
+`YYYY.MM.DD` form. `scripts/validate_configs.py` fails if they disagree.
+
+### Testing the install scripts
+
+`scripts/test_main_sh.sh` serves policy files, error pages, and truncated
+downloads from a local HTTP server, and checks that `main.sh` installs the first
+and refuses the rest. This matters because the script writes downloaded files
+into system directories as root: an error page served with a 200 status must
+never end up being handed to a browser as policy.
+
+```shell
+scripts/test_main_sh.sh
+```
+
+By default it only exercises the download checks. Adding
+`JTB_ALLOW_SYSTEM_TEST=1` also drives the real menu, which writes to and then
+removes files under `/etc`, so only do that on a machine you do not mind
+changing. The GitHub Action sets it, because the runner is discarded afterwards.
 
 ### Testing with another branch or repository
 

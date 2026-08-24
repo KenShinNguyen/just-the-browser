@@ -362,8 +362,40 @@ def check_json_files():
                 error("%s: invalid JSON: %s" % (os.path.relpath(path, ROOT), exc))
 
 
+def check_policy_version():
+    """The installers print a policy version, so a user can say what they applied.
+
+    It is hard-coded in each script rather than downloaded, so that the version
+    shown is the version of the script that is actually running. That only stays
+    true if the two scripts and the VERSION file are kept in step.
+    """
+    version_file = os.path.join(ROOT, "VERSION")
+    if not os.path.exists(version_file):
+        error("VERSION: the file is missing")
+        return
+    version = open(version_file, encoding="utf-8").read().strip()
+    if not re.match(r"^\d{4}\.\d{2}\.\d{2}$", version):
+        error("VERSION: %r is not a YYYY.MM.DD version" % version)
+        return
+    stamps = {
+        "main.sh": r'POLICY_VERSION="([^"]*)"',
+        "main.ps1": r'\$PolicyVersion = "([^"]*)"',
+    }
+    for name, pattern in sorted(stamps.items()):
+        text = open(os.path.join(ROOT, name), encoding="utf-8").read()
+        found = re.search(pattern, text)
+        if not found:
+            error("%s: no policy version is set" % name)
+        elif found.group(1) != version:
+            error(
+                "%s: the policy version is %r, but VERSION says %r"
+                % (name, found.group(1), version)
+            )
+
+
 def main():
     check_json_files()
+    check_policy_version()
     profiles = {}
     for browser, config in sorted(BROWSERS.items()):
         try:

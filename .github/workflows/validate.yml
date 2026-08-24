@@ -38,6 +38,18 @@ jobs:
     - name: Check main.sh parses
       run: bash -n main.sh
 
+    - name: Check the test script with ShellCheck
+      run: shellcheck --severity=warning scripts/test_main_sh.sh
+
+    # "bash -n" and ShellCheck only prove main.sh parses. This serves policy
+    # files, error pages and truncated downloads over a local HTTP server and
+    # checks that main.sh installs the first and refuses the rest. The runner is
+    # thrown away afterwards, so the tests that write under /etc are allowed.
+    - name: Test the download checks in main.sh
+      env:
+        JTB_ALLOW_SYSTEM_TEST: '1'
+      run: scripts/test_main_sh.sh
+
     - name: Check main.ps1 parses
       shell: pwsh
       run: |

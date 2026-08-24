@@ -7,6 +7,12 @@ else
     BASEURL="$1"
 fi
 
+# Version of the browser policies this copy of the script installs. It is shown
+# in the header, so a user reporting a browser problem can say which policy set
+# they applied. scripts/validate_configs.py keeps this in step with the VERSION
+# file and with main.ps1.
+POLICY_VERSION="2026.08.24"
+
 OS=$(uname)
 MICROSOFT_EDGE_MAC_CONFIG="$BASEURL/edge/edge.mobileconfig"
 GOOGLE_CHROME_MAC_CONFIG="$BASEURL/chrome/chrome.mobileconfig"
@@ -105,29 +111,43 @@ _install_json() {
     local dir="$2"
     local name="$3"
     local as_root="$4"
-    local run=""
     local tmp
-    if [ "$as_root" = "root" ]; then
-        run="${AS_ROOT}"
-    fi
     tmp=$(mktemp) || { echo "Could not create a temporary file."; return 1; }
     if ! _fetch_verified "$url" json "$tmp"; then
         rm -f "$tmp"
         return 1
     fi
-    $run mkdir -p "$dir" || { rm -f "$tmp"; return 1; }
-    $run cp "$tmp" "$dir/$name" || { rm -f "$tmp"; return 1; }
+    if ! _place_file "$tmp" "$dir" "$name" "$as_root"; then
+        rm -f "$tmp"
+        return 1
+    fi
+    rm -f "$tmp"
+    return 0
+}
+
+# Copy an already downloaded and checked file into a policy directory.
+# Usage: _place_file <source file> <directory> <filename> [root]
+_place_file() {
+    local src="$1"
+    local dir="$2"
+    local name="$3"
+    local as_root="$4"
+    local run=""
+    if [ "$as_root" = "root" ]; then
+        run="${AS_ROOT}"
+    fi
+    $run mkdir -p "$dir" || return 1
+    $run cp "$src" "$dir/$name" || return 1
     # mktemp creates the file as 600, but the browser reads policies as the
     # normal user, so the installed copy has to be world readable
-    $run chmod 644 "$dir/$name" || { rm -f "$tmp"; return 1; }
-    rm -f "$tmp"
+    $run chmod 644 "$dir/$name" || return 1
     return 0
 }
 
 # Render initial interface for all pages
 _show_header() {
     clear
-    echo -e "\nJust the Browser ($OS)\n========\n"
+    echo -e "\nJust the Browser ($OS)\n========\nPolicy version: $POLICY_VERSION\nSource: $BASEURL\n"
 }
 
 # Install Google Chrome settings
@@ -158,7 +178,9 @@ _uninstall_chrome() {
         read -p "Press Enter/Return to continue."
     else
         _confirm_root
-        "${AS_ROOT}" rm "/etc/opt/chrome/policies/managed/managed_policies.json" || { read -p "Remove failed! Press Enter/Return to continue."; return; }
+        if [ -e "/etc/opt/chrome/policies/managed/managed_policies.json" ]; then
+            "${AS_ROOT}" rm "/etc/opt/chrome/policies/managed/managed_policies.json" || { read -p "Remove failed! Press Enter/Return to continue."; return; }
+        fi
         read -p "Removed Chrome settings. Press Enter/Return to continue."
     fi
 }
@@ -168,10 +190,22 @@ _install_chromium() {
     _show_header
     echo "Downloading configuration, please wait..."
     _confirm_root
-    # Install to /etc/chromium-browser/policies/managed for Ubuntu and related distributions
-    _install_json "$CHROME_SETTINGS" "/etc/chromium-browser/policies/managed" "managed_policies.json" root || { read -p "Press Enter/Return to continue."; return; }
-    # Install to /etc/chromium/policies/managed for other distributions
-    _install_json "$CHROME_SETTINGS" "/etc/chromium/policies/managed" "managed_policies.json" root || { read -p "Press Enter/Return to continue."; return; }
+    # Chromium reads its policies from a different directory depending on how the
+    # distribution packages it, and there is no reliable way to tell which one a
+    # given build will use, so both are written. The file is downloaded and
+    # checked once and then copied to each path, rather than fetched twice.
+    local tmp
+    tmp=$(mktemp) || { read -p "Could not create a temporary file. Press Enter/Return to continue."; return; }
+    if ! _fetch_verified "$CHROME_SETTINGS" json "$tmp"; then
+        rm -f "$tmp"
+        read -p "Press Enter/Return to continue."
+        return
+    fi
+    # /etc/chromium-browser/policies/managed for Ubuntu and related distributions
+    _place_file "$tmp" "/etc/chromium-browser/policies/managed" "managed_policies.json" root || { rm -f "$tmp"; read -p "Install failed! Press Enter/Return to continue."; return; }
+    # /etc/chromium/policies/managed for other distributions
+    _place_file "$tmp" "/etc/chromium/policies/managed" "managed_policies.json" root || { rm -f "$tmp"; read -p "Install failed! Press Enter/Return to continue."; return; }
+    rm -f "$tmp"
     # Completed
     read -p "Installed Chromium settings. Press Enter/Return to continue."
 }
@@ -262,7 +296,9 @@ _uninstall_firefox() {
         read -p "Press Enter/Return to continue."
     else
          _confirm_root
-        "${AS_ROOT}" rm "/etc/firefox/policies/policies.json" || { read -p "Remove failed! Press Enter/Return to continue."; return; }
+        if [ -e "/etc/firefox/policies/policies.json" ]; then
+            "${AS_ROOT}" rm "/etc/firefox/policies/policies.json" || { read -p "Remove failed! Press Enter/Return to continue."; return; }
+        fi
         read -p "Removed Firefox settings. Press Enter/Return to continue.";
     fi
 }
@@ -315,7 +351,9 @@ _uninstall_brave() {
         read -p "Press Enter/Return to continue."
     else
         _confirm_root
-        "${AS_ROOT}" rm "/etc/brave/policies/managed/managed_policies.json" || { read -p "Remove failed! Press Enter/Return to continue."; return; }
+        if [ -e "/etc/brave/policies/managed/managed_policies.json" ]; then
+            "${AS_ROOT}" rm "/etc/brave/policies/managed/managed_policies.json" || { read -p "Remove failed! Press Enter/Return to continue."; return; }
+        fi
         read -p "Removed Brave settings. Press Enter/Return to continue."
     fi
 }
@@ -440,4 +478,8 @@ _main() {
     done
 }
 
-_main
+# scripts/test_main_sh.sh sources this file to exercise the download checks
+# directly. Everything else runs the menu as usual.
+if [ "${JTB_SOURCE_ONLY:-}" != "1" ]; then
+    _main
+fi
