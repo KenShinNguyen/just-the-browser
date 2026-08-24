@@ -37,11 +37,21 @@ jobs:
         echo "drift=$?" >> "$GITHUB_OUTPUT"
         cat drift-report.md
 
+    # The issue is found by label rather than by title search, because GitHub's
+    # search index is eventually consistent and would let a second run open a
+    # duplicate before the first issue is indexed
+    - name: Make sure the label exists
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        gh label create upstream-drift \
+          --description "This fork's policies differ from upstream" \
+          --color ededed --force
+
     - name: Open or update the drift issue
       if: steps.compare.outputs.drift == '1'
       env:
         GH_TOKEN: ${{ github.token }}
-        TITLE: 'Fork is out of sync with upstream policies'
       run: |
         {
           echo "This is posted automatically by the \`upstream_drift.yml\` workflow."
@@ -51,27 +61,27 @@ jobs:
           echo "_Last checked: $(date -u '+%Y-%m-%d %H:%M UTC')_"
         } > issue-body.md
 
-        EXISTING=$(gh issue list --state open --search "$TITLE in:title" \
-          --json number,title \
-          --jq ".[] | select(.title == \"$TITLE\") | .number" | head -n 1)
+        EXISTING=$(gh issue list --state open --label upstream-drift \
+          --json number --jq '.[0].number // empty')
 
         if [ -n "$EXISTING" ]; then
           echo "Updating issue #$EXISTING"
           gh issue edit "$EXISTING" --body-file issue-body.md
         else
           echo "Opening a new issue"
-          gh issue create --title "$TITLE" --body-file issue-body.md
+          gh issue create \
+            --title "Fork is out of sync with upstream policies" \
+            --label upstream-drift \
+            --body-file issue-body.md
         fi
 
     - name: Close the drift issue when back in sync
       if: steps.compare.outputs.drift == '0'
       env:
         GH_TOKEN: ${{ github.token }}
-        TITLE: 'Fork is out of sync with upstream policies'
       run: |
-        EXISTING=$(gh issue list --state open --search "$TITLE in:title" \
-          --json number,title \
-          --jq ".[] | select(.title == \"$TITLE\") | .number" | head -n 1)
+        EXISTING=$(gh issue list --state open --label upstream-drift \
+          --json number --jq '.[0].number // empty')
         if [ -n "$EXISTING" ]; then
           gh issue close "$EXISTING" \
             --comment "The fork's policies match upstream again, closing automatically."
